@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <body style="background: #333">
+        <script>
+            var gui = require( 'nw.gui' );
+            var win = gui.Window.get();
+            
+            function takeSnapshot(){
+                win.capturePage(function( img ){
+                    var popWindow = gui.Window.open( 'popup.html', { width: 420, height: 300 } );
+                    
+                    popWindow.on( 'loaded', function(){
+                        var image = popWindow.window.document.getElementById( 'image' );
+                        image.src = img;;
+                    });
+                }, 'png' );         
+            
+            }  
+        </script>
+        
+        <div style="background: #123; width: 100px; height: 100px; borer: 1px solid #000">
+        </div>
+        
+        <button onclick="takeSnapshot()">Click me</button>
+        
+    </body>
+</html>
