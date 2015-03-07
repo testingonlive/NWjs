@@ -1,27 +1,82 @@
 <!DOCTYPE html>
 <html>
-    <body style="background: #333">
+    <body>
+        <style>
+            #holder {
+                border: 10px dashed #ccc;
+                width: 300px;
+                height: 300px;
+                margin: 20px auto;
+            }
+            
+            #holder.hover {
+                border: 10px dashed #333;
+            }
+        </style>
+        
+        <div id="holder"></div>
+        
         <script>
-            var gui = require( 'nw.gui' );
-            var win = gui.Window.get();
+            var getConfig = require( './js/getconfig.js' ),
+                getImages = require( './js/getimages.js' );
+        
+            window.ondragover = function( evt ){
+                evt.preventDefault();
+                return false;
+            };
             
-            function takeSnapshot(){
-                win.capturePage(function( img ){
-                    var popWindow = gui.Window.open( 'popup.html', { width: 420, height: 300 } );
+            window.ondrop = function( evt ){
+                evt.preventDefault();
+                return false;
+            };
+            
+            var holder = document.getElementById( 'holder' );
+            
+            holder.ondragover = function(){
+                this.className = 'hover';
+                return false;
+            };
+            
+            holder.ondragleave = function(){
+                this.className = '';
+                return false;
+            };
+            
+            holder.ondrop = function( evt ){
+                evt.preventDefault();
+                
+                for ( var i = 0; i < evt.dataTransfer.files.length; ++i ){
+                    var _path = evt.dataTransfer.files[ i ].path;
                     
-                    popWindow.on( 'loaded', function(){
-                        var image = popWindow.window.document.getElementById( 'image' );
-                        image.src = img;;
+                    getConfig( _path, function( err, data) {
+                        if (err) return console.log( err );
+                        
+                        data.forEach(function( elm ){                            
+                            getImages( elm, function( err, data ){
+                                if ( err ) return console.log( err );
+                                console.log( data );
+                            });                        
+                        });
+                        
+                                                
                     });
-                }, 'png' );         
+                }
+                
+                return false;
+            };
             
-            }  
         </script>
-        
-        <div style="background: #123; width: 100px; height: 100px; borer: 1px solid #000">
-        </div>
-        
-        <button onclick="takeSnapshot()">Click me</button>
-        
     </body>
 </html>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
