@@ -23,7 +23,9 @@
         
         <script>
             var getConfig = require( './js/getconfig.js' ),
-                getImages = require( './js/getimages.js' );
+                getImages = require( './js/getimages.js' ),
+                doZip = require( './js/dozip.js' );
+                
         
             window.ondragover = function( evt ){
                 evt.preventDefault();
@@ -53,17 +55,18 @@
                 for ( var i = 0; i < evt.dataTransfer.files.length; ++i ){
                     var _path = evt.dataTransfer.files[ i ].path;
                     
-                    getConfig( _path, function( err, data) {
-                        if (err) return console.log( err );
-                        
-                        data.forEach(function( elm ){                            
-                            getImages( elm, function( err, data ){
-                                if ( err ) return console.log( err );
-                            });                        
-                        });
-                        
-                                                
-                    });
+                    getConfig( _path )
+                        .then( function( configAr ){
+                            return Promise.all( configAr.map( getImages ) );
+                        })                        
+                        .then( function( imagesAr ){
+                            return doZip( imagesAr )                 
+                        })
+                        .then(function( zip ){
+                            // @TODO write save function
+                            save( zip );
+                        })                    
+                    
                 }
                 
                 return false;
