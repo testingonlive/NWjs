@@ -16,6 +16,11 @@
         
         <div id="holder"></div>
         
+        <div id="dialog" >
+          Choose a path to save your shot:
+          <input type="file" nwsaveas="filename.txt" />
+        </div>
+        
         <script>
             var getConfig = require( './js/getconfig.js' ),
                 getImages = require( './js/getimages.js' );
@@ -54,7 +59,6 @@
                         data.forEach(function( elm ){                            
                             getImages( elm, function( err, data ){
                                 if ( err ) return console.log( err );
-                                console.log( data );
                             });                        
                         });
                         

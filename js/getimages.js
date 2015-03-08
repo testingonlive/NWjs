@@ -1,18 +1,17 @@
 /**
 * module to get images
 *
-* @TODO Clean up this mess
+* @TODO move to image capture to series instead of seqential
 */
 
 var gui = window.require( 'nw.gui' ),
     fs = require( 'fs' );
 
+
+
 module.exports = function( config, callback ){
 
-    
-    
-        
-    
+   
     // helper function to do next or not
     (function next(){   
         var curInd = next.curInd || 1,
@@ -25,21 +24,29 @@ module.exports = function( config, callback ){
                 _height = parseInt( _split[ 1 ] );
             
             // open a new window, hidden, with config url
-            var win = gui.Window.open( config[ 0 ], { show: false, width: _width, height: _height } );
+            var win = gui.Window.open( config[ 0 ], { show: false } );
             
-            win.once( 'loaded', function(){        
-                win.capturePage(function( img ){
-                    var base64Data = img.replace(/^data:image\/(png|jpg|jpeg);base64,/, "");
-                    fs.writeFile( _width + 'x' + _height + '.jpg', base64Data, 'base64', function( err ){
+            win.resizeTo( _width, _height );
+            
+            win.once( 'loaded', function(){                       
+                win.capturePage( function( img ){
+                    // get the img data ready to be written
+                    var base64Data = img.replace(/^data:image\/(png|jpg|jpeg);base64,/, ""),
+                        name = config[ 0 ].replace( /\W/g, '' );
+
+                    fs.writeFile( name + _width + 'x' + _height + '.jpg', base64Data, 'base64', function( err ){
                         if ( err ) return callback( err );
-                        // increment the curInd
-                        next.curInd = curInd +1;
-                        // clean up
                         win.close();
-                        next();
-                    });
+                    });        
                 });        
-            });          
+            });   
+            
+            win.once( 'closed', function(){
+
+                win = null;
+                next.curInd = curInd +1;
+                next();
+            });  
             
             
         } else {
