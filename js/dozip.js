@@ -14,13 +14,15 @@ module.exports = function( arr ){
 
         // second loop is through the objects
         elm.forEach(function( elm ){
-        
-            _folder.file( elm.id, elm.data, {base64: true} )
+            
+            var _data = elm.data.replace( /^data:image\/(png|jpg|jpeg);base64,/, '' );
+            
+            _folder.file( elm.id + '.jpg', _data, {base64: true} )
         })
 
     });
 
-    return zip.generate( { type: 'blob' } );
+    return zip.generate( { type: 'base64' } );
 
 }
 

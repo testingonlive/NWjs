@@ -12,65 +12,104 @@
             #holder.hover {
                 border: 10px dashed #333;
             }
+            
+            #dialog {
+                display: none;
+            }
         </style>
         
         <div id="holder"></div>
         
         <div id="dialog" >
           Choose a path to save your shot:
-          <input type="file" nwsaveas="filename.txt" />
+          <input type="file" nwsaveas />
         </div>
         
         <script>
             var getConfig = require( './js/getconfig.js' ),
                 getImages = require( './js/getimages.js' ),
-                doZip = require( './js/dozip.js' );
+                doZip = require( './js/dozip.js' ),
+                fs = require( 'fs' ),
                 
-        
-            window.ondragover = function( evt ){
+                holder = document.getElementById( 'holder' );
+                
+            function preventDefault( evt ){
                 evt.preventDefault();
-                return false;
+                return false
             };
             
-            window.ondrop = function( evt ){
-                evt.preventDefault();
-                return false;
-            };
             
-            var holder = document.getElementById( 'holder' );
+            function getFileName() {
+                return new Promise(function( resolve, reject ){ 
+                    var _input = document.querySelector( '#dialog input' );
+                    
+                    _input.value = '';
+                                   
+                    _input.addEventListener( 'change', function(){
+                        resolve( this.value );                    
+                    });
+                    
+                    _input.addEventListener( 'error', function(){
+                        reject( new Error( 'something has gone wrong' ) );
+                    }); 
+                    
+                    _input.click();               
+                });
             
-            holder.ondragover = function(){
+            }
+            
+            
+            function save( name, file ){
+                return new Promise(function( resolve, reject ){
+                    fs.writeFile( name, file, 'base64', function( err ) {
+                        //debugger;
+                        err ? reject( err ) : resolve();
+                    });
+                });     
+            }
+            
+            window.addEventListener( 'dragover', preventDefault );            
+            window.addEventListener( 'drop', preventDefault );            
+            
+            holder.addEventListener( 'dragover', function( evt ){
                 this.className = 'hover';
-                return false;
-            };
+                return false;            
+            });
             
-            holder.ondragleave = function(){
+            holder.addEventListener( 'dragleave', function( evt ){
                 this.className = '';
-                return false;
-            };
+                return false;            
+            });
             
-            holder.ondrop = function( evt ){
+            holder.addEventListener( 'drop', function( evt ){
                 evt.preventDefault();
                 
                 for ( var i = 0; i < evt.dataTransfer.files.length; ++i ){
                     var _path = evt.dataTransfer.files[ i ].path;
                     
+                    // the good stuff
                     getConfig( _path )
                         .then( function( configAr ){
+                            //debugger;
                             return Promise.all( configAr.map( getImages ) );
                         })                        
                         .then( function( imagesAr ){
-                            return doZip( imagesAr )                 
+                           // debugger;
+                            return Promise.all( [ getFileName(), doZip( imagesAr ) ] );             
                         })
-                        .then(function( zip ){
-                            // @TODO write save function
-                            save( zip );
-                        })                    
+                        .then(function( arr ){   
+                            //debugger;                         
+                            return save.apply( null, arr );
+                        })       
+                                     
                     
                 }
                 
-                return false;
-            };
+                return false;            
+            
+            });
+            
+            
             
         </script>
     </body>

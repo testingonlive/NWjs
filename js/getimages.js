@@ -28,7 +28,7 @@ function _getImage( url, width, height ){
         }); 
         
         win.on( 'error', function(){
-            reject( new Error( 'image not captured' )        
+            reject( new Error( 'image not captured' ) );        
         });
         
      });
