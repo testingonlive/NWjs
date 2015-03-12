@@ -18,7 +18,9 @@
             }
         </style>
         
-        <div id="holder"></div>
+        <div id="holder">
+            <span id="info"></span>
+        </div>
         
         <div id="dialog" >
           Choose a path to save your shot:
@@ -28,11 +30,23 @@
         <script>
             var getConfig = require( './js/getconfig.js' ),
                 getImages = require( './js/getimages.js' ),
-                doZip = require( './js/dozip.js' ),
+                imageGetter = new getImages(),
+                doZip = require( './js/dozip.js' ),                
                 fs = require( 'fs' ),
                 
-                holder = document.getElementById( 'holder' );
+                holder = document.getElementById( 'holder' ),
+                // used to update #info
+                _count = 0,
+                _done = 0,
+                info = document.querySelector( '#info' );
                 
+            
+            imageGetter.on( 'done', function(){
+                info.textContent = ++_done + '/' + _count + 'complete';
+            });
+            
+                       
+            
             function preventDefault( evt ){
                 evt.preventDefault();
                 return false
@@ -84,26 +98,37 @@
             holder.addEventListener( 'drop', function( evt ){
                 evt.preventDefault();
                 
-                for ( var i = 0; i < evt.dataTransfer.files.length; ++i ){
-                    var _path = evt.dataTransfer.files[ i ].path;
-                    
-                    // the good stuff
-                    getConfig( _path )
-                        .then( function( configAr ){
-                            //debugger;
-                            return Promise.all( configAr.map( getImages ) );
-                        })                        
-                        .then( function( imagesAr ){
-                           // debugger;
-                            return Promise.all( [ getFileName(), doZip( imagesAr ) ] );             
-                        })
-                        .then(function( arr ){   
-                            //debugger;                         
-                            return save.apply( null, arr );
-                        })       
-                                     
-                    
-                }
+                info.textContent = 'Working....'
+              
+                var _paths = [].map.call( evt.dataTransfer.files, function( elm ){
+                    return elm.path;
+                });
+                       
+                
+                Promise.all( _paths.map( getConfig ) )
+                    .then( function( configArs ){
+                        return configArs.reduce(function( a, b ){
+                            return a.concat( b );
+                        });
+                    })
+                    .then( function( configAr ){
+                        //debugger;
+                        _count = configAr.reduce( function( p, c ){
+                            return p + c.length;
+                        }, 0 ) - configAr.length;
+                        info.textContent = _done + '/' + _count + 'complete';
+                        
+                        return Promise.all( configAr.map( imageGetter.getImages, getImages.prototype ) );
+                    })                        
+                    /*.then( function( imagesAr ){
+                       // debugger;
+                        return Promise.all( [ getFileName(), doZip( imagesAr ) ] );             
+                    })
+                    .then(function( arr ){   
+                        //debugger;                         
+                        return save.apply( null, arr );
+                    }) */
+                                      
                 
                 return false;            
             
