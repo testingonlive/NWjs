@@ -4,21 +4,11 @@
 */
 
 var gui = window.require( 'nw.gui' ),
-    util = require( 'util' ),
-    events = require( 'events' ),
     fs = require( 'fs' );
 
 
-function ImageGetter(){
-    events.EventEmitter.call( this );
-}
-
-util.inherits( ImageGetter, events.EventEmitter );
-
-
-ImageGetter.prototype._getImage = function( url, width, height ){
-    var self = this;
-    
+// helper function to get individual image
+function _getImage( url, width, height, cb ){
     return new Promise(function( resolve, reject ){
         
         var win = gui.Window.open( url, { show: false } ),
@@ -29,7 +19,7 @@ ImageGetter.prototype._getImage = function( url, width, height ){
         win.once( 'loaded', function(){                       
             win.capturePage( function( img ){
                 win.close( true );
-                self.emit( 'done' );
+                cb();
                 resolve( { id: width + 'x' + height, urlKey: urlKey, data: img } );       
             });        
         }); 
@@ -47,25 +37,26 @@ ImageGetter.prototype._getImage = function( url, width, height ){
 }
 
 
-ImageGetter.prototype.getImages = function( arr ){      
-    this.emit( 'done' );
-    var self = this,
-        _url = arr[ 0 ],
-        promiseAr = arr.slice( 1 ).map(function( elm ){
-            var _split = elm.split( 'x' ),
-                _width = parseInt( _split[ 0 ] ),
-                _height = parseInt( _split[ 1 ] );
-                
-            return self._getImage( _url, _width, _height );
-        
-        });
-    
-    return Promise.all( promiseAr )
+module.exports = function( cb ){
+    return function( arr ){
 
+        var _url = arr[ 0 ],
+            promiseAr = arr.slice( 1 ).map(function( elm ){
+                var _split = elm.split( 'x' ),
+                    _width = parseInt( _split[ 0 ] ),
+                    _height = parseInt( _split[ 1 ] );
+                    
+                return _getImage( _url, _width, _height, cb );
+            
+            });
+        
+        return Promise.all( promiseAr )
+
+    }
 }
 
 
-module.exports = ImageGetter;
+
 
 
 

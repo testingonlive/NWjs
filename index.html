@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
-    <body>
+    <body style="-webkit-app-region: drag">
         <style>
             #holder {
                 border: 10px dashed #ccc;
                 width: 300px;
                 height: 300px;
                 margin: 20px auto;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
             
             #holder.hover {
@@ -15,6 +18,11 @@
             
             #dialog {
                 display: none;
+            }
+            
+            #info {
+                  font-size: 2em;
+                  font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
             }
         </style>
         
@@ -30,7 +38,7 @@
         <script>
             var getConfig = require( './js/getconfig.js' ),
                 getImages = require( './js/getimages.js' ),
-                imageGetter = new getImages(),
+                //imageGetter = new getImages(),
                 doZip = require( './js/dozip.js' ),                
                 fs = require( 'fs' ),
                 
@@ -40,16 +48,16 @@
                 _done = 0,
                 info = document.querySelector( '#info' );
                 
+                      
             
-            imageGetter.on( 'done', function(){
-                info.textContent = ++_done + '/' + _count + 'complete';
-            });
-            
+            function addOne(){
+                info.textContent = _done++ + '/' + _count + ' complete';
+            }
                        
             
             function preventDefault( evt ){
                 evt.preventDefault();
-                return false
+                return false;
             };
             
             
@@ -116,18 +124,23 @@
                         _count = configAr.reduce( function( p, c ){
                             return p + c.length;
                         }, 0 ) - configAr.length;
-                        info.textContent = _done + '/' + _count + 'complete';
+                        addOne();
                         
-                        return Promise.all( configAr.map( imageGetter.getImages, getImages.prototype ) );
+                        return Promise.all( configAr.map( getImages( addOne ) ) );
                     })                        
-                    /*.then( function( imagesAr ){
+                    .then( function( imagesAr ){
                        // debugger;
                         return Promise.all( [ getFileName(), doZip( imagesAr ) ] );             
                     })
                     .then(function( arr ){   
+                        
                         //debugger;                         
                         return save.apply( null, arr );
-                    }) */
+                    })
+                    .then(function(){
+                        info.textContent = 'Done!';
+                        holder.className = ''
+                    });
                                       
                 
                 return false;            

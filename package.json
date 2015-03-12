@@ -1,4 +1,10 @@
 {
     "name": "nw-api-demo",
-    "main": "index.html"
+    "main": "index.html",
+    "window": {
+        "frame": false,
+        "toolbar": false,
+        "width": 360,
+        "height": 360
+    }
 }
