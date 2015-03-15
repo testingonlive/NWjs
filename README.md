@@ -1,4 +1,5 @@
 #NWjs
 Having a play with NW.js, node-webkit
 
-Plan is to make a tool to take screen shots for responsive testing.
+Little tool to take screenshots. Works OK.
+Need to sort how you go about builds.

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
-    <body style="-webkit-app-region: drag">
+    <head>
+        <title>YAY! screenshots!</title>
+    </head>
+    <body>
         <style>
             #holder {
                 border: 10px dashed #ccc;
@@ -23,11 +26,12 @@
             #info {
                   font-size: 2em;
                   font-family: Arial,"Helvetica Neue",Helvetica,sans-serif;
+                  text-align: center;
             }
         </style>
         
         <div id="holder">
-            <span id="info"></span>
+            <span id="info">Drag config files here</span>
         </div>
         
         <div id="dialog" >
@@ -38,29 +42,30 @@
         <script>
             var getConfig = require( './js/getconfig.js' ),
                 getImages = require( './js/getimages.js' ),
-                //imageGetter = new getImages(),
                 doZip = require( './js/dozip.js' ),                
-                fs = require( 'fs' ),
-                
+                fs = require( 'fs' ),                
                 holder = document.getElementById( 'holder' ),
+                
                 // used to update #info
                 _count = 0,
                 _done = 0,
                 info = document.querySelector( '#info' );
                 
-                      
-            
+                  
+            // dont like this function but it does the trick
             function addOne(){
                 info.textContent = _done++ + '/' + _count + ' complete';
             }
                        
-            
+            // keep this DRY(ish)
             function preventDefault( evt ){
                 evt.preventDefault();
                 return false;
             };
             
             
+            // use the hidden input field. Keeping with the promise theme
+            // @TODO do I need to remove the event listener?
             function getFileName() {
                 return new Promise(function( resolve, reject ){ 
                     var _input = document.querySelector( '#dialog input' );
@@ -76,20 +81,20 @@
                     }); 
                     
                     _input.click();               
-                });
-            
+                });            
             }
             
             
+            // save the file via node.
             function save( name, file ){
                 return new Promise(function( resolve, reject ){
                     fs.writeFile( name, file, 'base64', function( err ) {
-                        //debugger;
                         err ? reject( err ) : resolve();
                     });
                 });     
             }
             
+            // bunch of event listeners to deal with the drag and drop events
             window.addEventListener( 'dragover', preventDefault );            
             window.addEventListener( 'drop', preventDefault );            
             
@@ -103,43 +108,61 @@
                 return false;            
             });
             
+            // the big one...
             holder.addEventListener( 'drop', function( evt ){
                 evt.preventDefault();
                 
                 info.textContent = 'Working....'
               
+                // get an array of paths from the file list obj
                 var _paths = [].map.call( evt.dataTransfer.files, function( elm ){
                     return elm.path;
                 });
                        
-                
+                // go get all the config arrays
                 Promise.all( _paths.map( getConfig ) )
+                    
+                    // reduce the returned arrays into one array
                     .then( function( configArs ){
                         return configArs.reduce(function( a, b ){
                             return a.concat( b );
                         });
                     })
+                    
+                    // take our one config array and go get some images
                     .then( function( configAr ){
-                        //debugger;
+                        // stuff to update #info and start count 
                         _count = configAr.reduce( function( p, c ){
                             return p + c.length;
                         }, 0 ) - configAr.length;
                         addOne();
                         
+                        // getImages does one 'set' at a time. Need to map the getImages 
+                        // function onto the config array which is an array of arrays.
+                        // getImages accepts a callback function, in this case addOne.
                         return Promise.all( configAr.map( getImages( addOne ) ) );
-                    })                        
+                    })     
+                    
+                    // take the array of images (and metadata) and zip them
+                    // also need to grab a filename                   
                     .then( function( imagesAr ){
-                       // debugger;
                         return Promise.all( [ getFileName(), doZip( imagesAr ) ] );             
                     })
-                    .then(function( arr ){   
-                        
-                        //debugger;                         
+                    
+                    // pass our zip object and filename to save function
+                    .then(function( arr ){         
                         return save.apply( null, arr );
                     })
+                    
+                    // some clean up at the end.                   
                     .then(function(){
+                        _done = 0;
                         info.textContent = 'Done!';
-                        holder.className = ''
+                        holder.className = '';
+                        setTimeout(function(){
+                            info.textContent = 'Drag config files here.';
+                        }, 3e3);                        
+                        
                     });
                                       
                 

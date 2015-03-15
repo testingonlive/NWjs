@@ -1,16 +1,11 @@
 /**
-* callback form getConfig method
+* module to get config file and convert to config array
 *
-* @callback getConfigCallback
-* @param {Error} err - error object
-* @param {Object} config - config object 
-*/
-
-/**
-* module to get config file and convert to config object
+* The resulting config array is an array of arrays
+* Each array represents a set of screenshots required
+* First entry is a web address followed by reqired screen dimensions
 *
-* @method getConfig
-* @param {String} path - path to config file
+* returning a promise because we can
 */
 var fs = require( 'fs' );
 

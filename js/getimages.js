@@ -1,6 +1,9 @@
 /**
 * module to get images
 *
+* Takes an array as an argument. Represents a set of images to be got.
+* Returns a promise that resolves when all images have been taken.
+* Each image is resolved with an object being passed. id, urlKey + data props
 */
 
 var gui = window.require( 'nw.gui' ),
@@ -8,6 +11,7 @@ var gui = window.require( 'nw.gui' ),
 
 
 // helper function to get individual image
+// cb (callback) used to measure progress
 function _getImage( url, width, height, cb ){
     return new Promise(function( resolve, reject ){
         
@@ -36,7 +40,8 @@ function _getImage( url, width, height, cb ){
 
 }
 
-
+// map _getImages onto the config arr
+// since _getImage returns a promise we can return Promise.all
 module.exports = function( cb ){
     return function( arr ){
 
